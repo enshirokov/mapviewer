@@ -9,5 +9,6 @@
         <file>images/zoom_in.png</file>
         <file>images/zoom_out.png</file>
         <file>images/map.png</file>
+        <file>images/defaultmap.jpg</file>
     </qresource>
 </RCC>

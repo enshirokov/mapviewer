@@ -16,7 +16,7 @@ signals:
     void cursorPosition(QPointF);
 
 private:
-    void mousePressEvent( QGraphicsSceneMouseEvent  * event );
+    void mousePressEvent(QGraphicsSceneMouseEvent  * event);
     void mouseMoveEvent(QGraphicsSceneMouseEvent  * event);
 
 };

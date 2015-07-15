@@ -10,13 +10,12 @@
 #include <QListWidget>
 
 #include "myscene.h"
+#include "myview.h"
 
 namespace Ui {
 class MainWindow;
 }
 
-static const double SCALE_RATE = 0.2;
-static const int GRID_SIZE = 60;
 static const int ICON_SIZE = 64;
 static const int MAINWINDOW_MIN_WIDTH = 800;
 static const int MAINWINDOW_MIN_HEIGHT = 600;
@@ -32,11 +31,6 @@ public:
     ~MainWindow();
 
 private slots:
-    void paintGrid();               // paint grid on map
-
-    void zoomIn();                  // zoom in
-    void zoomOut();                 // zoom out
-    void addPin();                  // add pin on map
     void setPin(QPointF);
     void changePinTitle(QListWidgetItem*);
 
@@ -53,7 +47,6 @@ private:
     void createCentralWidget();     // create central widget
 
 
-
 private:
     Ui::MainWindow* ui;
     QMenu* fileMenu;
@@ -67,17 +60,19 @@ private:
     QAction* zoomOutAct;
     QAction* pinAct;
 
-    MyScene* scene;
-    QGraphicsView* view;
+    QGraphicsScene* scene;
+    //MyScene* scene;
+    //QGraphicsView* view;
+    MyView* view;
     QTabWidget* tabWidget;
     QListWidget* listWidgetPin;
     QListWidget* listWidgetMap;
 
 
-    QGraphicsItem* map;
+//    QGraphicsItem* map;
     QList<QGraphicsPixmapItem*> pinList;
-    QGraphicsItemGroup* itemGroupPin;
-    QGraphicsItemGroup* itemGroupGrid;
+//    QGraphicsItemGroup* itemGroupPin;
+//    QGraphicsItemGroup* itemGroupGrid;
 
 
 };

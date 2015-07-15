@@ -21,10 +21,10 @@ MainWindow::MainWindow(QWidget *parent) :
     setWindowTitle(MAIN_TITLE);
     setWindowIcon(QIcon(":/images/images/main_icon.png"));
 
+    createCentralWidget();
     createActions();
     createMenus();
     createToolBar();
-    createCentralWidget();
 }
 
 MainWindow::~MainWindow()
@@ -37,25 +37,25 @@ void MainWindow::createActions()
     openAct = new QAction(QIcon(":/images/images/open.png"), tr("&Open"), this);
     openAct->setShortcuts(QKeySequence::New);
     openAct->setStatusTip(tr("Open file"));
-    connect(openAct, SIGNAL(triggered()), this, SLOT(openFile()));
+    connect(openAct, &QAction::triggered, this, &MainWindow::openFile);
 
     saveAct = new QAction(QIcon(":/images/images/save.png"), tr("&Save"), this);
     saveAct->setShortcuts(QKeySequence::New);
     saveAct->setStatusTip(tr("Open file"));
-    connect(saveAct, SIGNAL(triggered()), this, SLOT(save()));
+    connect(saveAct, &QAction::triggered, this, &MainWindow::save);
 
     quitAct = new QAction(tr("&Quit"), this);
     quitAct->setShortcuts(QKeySequence::Quit);
     quitAct->setStatusTip(tr("Quit"));
-    connect(quitAct, SIGNAL(triggered()), this, SLOT(quit()));
+    connect(quitAct, &QAction::triggered, this, &MainWindow::quit);
 
     zoomInAct = new QAction(QIcon(":/images/images/zoom_in.png"), tr("&Zoom In"), this);
     zoomInAct->setStatusTip(tr("Zoom In"));
-    connect(zoomInAct, SIGNAL(triggered()), this, SLOT(zoomIn()));
+    connect(zoomInAct, &QAction::triggered, view, &MyView::zoomIn);
 
     zoomOutAct = new QAction(QIcon(":/images/images/zoom_out.png"), tr("&Zoom Out"), this);
     zoomOutAct->setStatusTip(tr("Zoom In"));
-    connect(zoomOutAct, SIGNAL(triggered()), this, SLOT(zoomOut()));
+    connect(zoomOutAct, &QAction::triggered, view, &MyView::zoomOut);
 
     pinAct = new QAction(QIcon(":/images/images/pinR.png"), tr("&Add pin"), this);
     pinAct->setStatusTip(tr("Zoom In"));
@@ -97,21 +97,23 @@ void MainWindow::createToolBar()
     fileToolBar->addAction(pinAct);
 
 
-
 }
 
 void MainWindow::createCentralWidget()
 {
     scene = new MyScene();
-    connect(scene, SIGNAL(cursorPosition(QPointF)), this, SLOT(setPin(QPointF)));
+    connect((MyScene*)scene, &MyScene::cursorPosition, this, &MainWindow::setPin);
 
-    view = new QGraphicsView(scene);
+    //view = new QGraphicsView(scene);
+    view = new MyView(scene);
     view->setMouseTracking(true);
 
     listWidgetPin = new QListWidget;
+    listWidgetPin->setIconSize(QSize(ICON_SIZE, ICON_SIZE));
     connect(listWidgetPin, SIGNAL(itemDoubleClicked(QListWidgetItem*)), this, SLOT(changePinTitle(QListWidgetItem*)));
 
     listWidgetMap = new QListWidget;
+    listWidgetMap->setIconSize(QSize(ICON_SIZE, ICON_SIZE));
 
     tabWidget = new QTabWidget;
     tabWidget->addTab(listWidgetPin, "Pin list");
@@ -122,67 +124,15 @@ void MainWindow::createCentralWidget()
     layout->addWidget(tabWidget);
 
     this->centralWidget()->setLayout(layout);
+
+
+    QImage image(":/images/images/defaultmap.jpg");
+    view->addImage(image);
+
+    QListWidgetItem* newItem = new QListWidgetItem(QIcon(":/images/images/map.png"), "Amsterdam");
+    listWidgetMap->addItem(newItem);
 }
 
-void MainWindow::paintGrid()
-{
-    int width = scene->width();
-    int height = scene->height();
-
-    if (itemGroupGrid == NULL)                       // not to destroy the group if it does not exist
-        scene->destroyItemGroup(itemGroupGrid);
-
-    itemGroupGrid = scene->createItemGroup(QList<QGraphicsItem*>());
-
-    for (int i = 0; i < height; i += GRID_SIZE) {
-        QGraphicsLineItem* line = new QGraphicsLineItem(0, i, width, i);
-        itemGroupGrid->addToGroup(line);
-
-    }
-
-    for (int i = 0; i < width; i += GRID_SIZE) {
-        QGraphicsLineItem* line = new QGraphicsLineItem(i, 0, i, height);
-        itemGroupGrid->addToGroup(line);
-    }
-
-}
-
-void MainWindow::zoomIn()
-{
-    if (scene->items().isEmpty())
-        return;
-
-    qreal scale = map->scale() + SCALE_RATE;
-    map->setScale(scale);
-    itemGroupPin->setScale(scale);
-    scene->setSceneRect(map->sceneBoundingRect());
-
-    paintGrid();
-}
-
-void MainWindow::zoomOut()
-{
-    if (scene->items().isEmpty())
-        return;
-
-    qreal scale = map->scale() - SCALE_RATE;
-    map->setScale(scale);
-    itemGroupPin->setScale(scale);
-
-    if (map->sceneBoundingRect().width() <= view->size().width() || map->sceneBoundingRect().height() <= view->size().height()) {
-        map->setScale(map->scale() + SCALE_RATE);            // return last scale
-        itemGroupPin->setScale(itemGroupPin->scale() + SCALE_RATE);
-    }
-
-    scene->setSceneRect(map->sceneBoundingRect());
-
-    paintGrid();
-}
-
-void MainWindow::addPin()
-{
-
-}
 
 void MainWindow::setPin(QPointF point)
 {
@@ -194,11 +144,7 @@ void MainWindow::setPin(QPointF point)
 
     if (pinAct->isChecked()) {
         currentPin->setPos(point.x(), point.y() - currentPin->boundingRect().height());
-        //currentPin->setFlag(QGraphicsItem::ItemIgnoresTransformations);
-
-        itemGroupPin->addToGroup(currentPin);
-        itemGroupPin->setFlag(QGraphicsItem::ItemIgnoresTransformations);
-        //scene->addItem(currentPin);
+        view->addPin(currentPin);
 
         pinList.append(currentPin);
 
@@ -220,20 +166,11 @@ void MainWindow::openFile()
     // need filter!
 
     QImage image(fileName);
-    map = new QGraphicsPixmapItem(QPixmap::fromImage(image));
-
-    map->setFlags(QGraphicsItem::ItemIsMovable | QGraphicsItem::ItemIsSelectable);
-    map->setPos(0, 0);
-    scene->addItem(map);
-    scene->setSceneRect(map->sceneBoundingRect());
+    view->addImage(image);
 
     QListWidgetItem* newItem = new QListWidgetItem(QIcon(":/images/images/map.png"), "new map");
     listWidgetMap->addItem(newItem);
 
-    itemGroupPin = scene->createItemGroup(QList<QGraphicsItem*>());
-    itemGroupPin->setZValue(1);
-
-    paintGrid();
 
 }
 
@@ -261,6 +198,8 @@ void MainWindow::addMapFromStore()
     // fill listWidgetMap from store
 
 }
+
+
 
 
 

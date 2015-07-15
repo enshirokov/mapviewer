@@ -7,9 +7,10 @@ MyScene::MyScene(QGraphicsScene* parent)
     //setScene(new QGraphicsScene);
 
 
+
 }
 
-void MyScene::mousePressEvent ( QGraphicsSceneMouseEvent * event )
+void MyScene::mousePressEvent ( QGraphicsSceneMouseEvent * event)
 {
 
     if(event->buttons() == Qt::LeftButton){
@@ -27,3 +28,4 @@ void MyScene::mouseMoveEvent(QGraphicsSceneMouseEvent  * event)
     int y = event->lastScenePos().y();
 
 }
+
